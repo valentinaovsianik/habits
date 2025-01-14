@@ -20,7 +20,7 @@ class UserCreateAPIView(CreateAPIView):
     permission_classes = (AllowAny,)
 
     def perform_create(self, serializer):
-        """Создание пользователя"""
+        """Создание пользователя с хешированием пароля"""
         user = serializer.save(is_active=True)
-        user.set_password(user.password)
+        user.set_password(serializer.validated_data["password"]) # Хешируем пароль
         user.save()
