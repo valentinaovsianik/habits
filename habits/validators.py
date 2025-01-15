@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+
 def validate_habit(data):
     pleasant = data.get("pleasant", False)
     reward = data.get("reward")
@@ -8,9 +9,7 @@ def validate_habit(data):
     periodicity = data.get("periodicity", 1)
 
     if pleasant and (reward or linked_habit):
-        raise serializers.ValidationError(
-            "Приятная привычка не может иметь вознаграждение или связанную привычку."
-        )
+        raise serializers.ValidationError("Приятная привычка не может иметь вознаграждение или связанную привычку.")
     if not pleasant and not (reward or linked_habit):
         raise serializers.ValidationError(
             "У полезной привычки должно быть либо вознаграждение, либо связанная привычка."

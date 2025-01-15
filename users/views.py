@@ -8,6 +8,7 @@ from users.serializers import UserSerializer
 
 class UserViewSet(ModelViewSet):
     """ViewSet для управления пользователями (CRUD)"""
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
@@ -22,5 +23,5 @@ class UserCreateAPIView(CreateAPIView):
     def perform_create(self, serializer):
         """Создание пользователя с хешированием пароля"""
         user = serializer.save(is_active=True)
-        user.set_password(serializer.validated_data["password"]) # Хешируем пароль
+        user.set_password(serializer.validated_data["password"])  # Хешируем пароль
         user.save()
