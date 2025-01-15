@@ -1,14 +1,17 @@
+from django.db.models import Q
 from rest_framework import permissions, viewsets
 from rest_framework.generics import ListAPIView
 
-from .models import Habit
-from .serializers import HabitSerializer
-from .paginations import HabitPagination
 from users.permissions import IsOwner
+
+from .models import Habit
+from .paginations import HabitPagination
+from .serializers import HabitSerializer
 
 
 class HabitViewSet(viewsets.ModelViewSet):
     """CRUD модели привычка"""
+
     queryset = Habit.objects.all()
     serializer_class = HabitSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwner]
@@ -16,19 +19,21 @@ class HabitViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        queryset = Habit.objects.select_related("owner")
         if self.action == "list":
-            return Habit.objects.filter(public=True)
-        return Habit.objects.filter(owner=user)
+            return queryset.filter(Q(public=True) | Q(owner=user))
+        return queryset.filter(owner=user)
 
     def perform_create(self, serializer):
-        # Устанавливаем владельца привычки
         serializer.save(owner=self.request.user)
 
 
 class PublicHabitList(ListAPIView):
     """Список публичных привычек"""
+
     serializer_class = HabitSerializer
     pagination_class = HabitPagination
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         # Возвращаем публичные привычки
