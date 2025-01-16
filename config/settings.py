@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "django_extensions",
     "drf_yasg",
     "corsheaders",
+    "django_celery_beat",
     "habits",
     "users",
 ]
@@ -107,28 +108,54 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
-    # "DEFAULT_PERMISSION_CLASSES": [
-    # "rest_framework.permissions.IsAuthenticated",
-    # ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.AllowAny",
     ],
 }
 
 
-#CACHES = {
-    #'default': {
-        #'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        #'LOCATION': 'unique-snowflake',
-    #}
-#}
+EMAIL_HOST = os.getenv("EMAIL_HOST")
+EMAIL_PORT = os.getenv("EMAIL_PORT")
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+TELEGRAM_URL = os.getenv("TELEGRAM_URL")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+
+
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND")
+
+CELERY_TIMEZONE = "Australia/Tasmania"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
+
+broker_connection_retry_on_startup = True
+
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+
+# Запуск задач по расписанию через celery-beat
+CELERY_BEAT_SCHEDULE = {
+    "send_habit_reminder_task": {
+        "task": "habits.tasks.send_habit_reminder",
+        "schedule": timedelta(days=1),
+    },
+    "send_habit_execution_task": {
+        "task": "habits.tasks.send_habit_execution_message",
+        "schedule": timedelta(days=1),
+    },
+}
+
 
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8000",
