@@ -13,6 +13,6 @@ class Command(BaseCommand):
         response = requests.get(url, params={"chat_id": chat_id, "text": message})
 
         if response.status_code == 200:
-            self.stdout.write(self.style.SUCCESS("Сообшение доставлено!"))
+            self.stdout.write(self.style.SUCCESS("Сообщение доставлено!"))
         else:
             self.stdout.write(self.style.ERROR(f"Сообщение не доставлено: {response.json()}"))

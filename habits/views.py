@@ -10,7 +10,12 @@ from .models import Habit
 from .paginations import HabitPagination
 from .serializers import HabitSerializer
 
+
 @method_decorator(name="list", decorator=swagger_auto_schema(operation_description="Habit ViewSet"))
+@method_decorator(name="create", decorator=swagger_auto_schema(operation_description="Create a new habit"))
+@method_decorator(name="retrieve", decorator=swagger_auto_schema(operation_description="Retrieve a habit"))
+@method_decorator(name="update", decorator=swagger_auto_schema(operation_description="Update a habit"))
+@method_decorator(name="destroy", decorator=swagger_auto_schema(operation_description="Delete a habit"))
 class HabitViewSet(viewsets.ModelViewSet):
     """CRUD модели привычка"""
 
