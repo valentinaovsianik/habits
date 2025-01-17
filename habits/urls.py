@@ -9,7 +9,7 @@ router = DefaultRouter()
 router.register(r"", HabitViewSet, basename="habit")
 
 urlpatterns = [
-    path("public/", PublicHabitList.as_view(), name="habit-list"),  # Путь для публичных привычек
+    path("public/", PublicHabitList.as_view(), name="public-habit-list"),  # Путь для публичных привычек
 ]
 
 urlpatterns += router.urls
