@@ -1,4 +1,6 @@
 from django.db.models import Q
+from django.utils.decorators import method_decorator
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, viewsets
 from rest_framework.generics import ListAPIView
 
@@ -8,7 +10,7 @@ from .models import Habit
 from .paginations import HabitPagination
 from .serializers import HabitSerializer
 
-
+@method_decorator(name="list", decorator=swagger_auto_schema(operation_description="Habit ViewSet"))
 class HabitViewSet(viewsets.ModelViewSet):
     """CRUD модели привычка"""
 
