@@ -75,6 +75,9 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            echo "Granting Docker permissions..."
+            sudo chmod 666 /var/run/docker.sock
+          
             echo "Pulling latest Docker image..."
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
             
