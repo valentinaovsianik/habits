@@ -75,6 +75,10 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            echo "Creating .env file..."
+            echo "${{ secrets.ENV_FILE }}" > /path/to/.env
+            chmod 600 /path/to/.env
+            
             echo "Granting Docker permissions..."
             sudo chmod 666 /var/run/docker.sock
           
