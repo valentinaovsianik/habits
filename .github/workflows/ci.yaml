@@ -77,15 +77,22 @@ jobs:
           script: |
             echo "Pulling latest Docker image..."
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
-
+            
             echo "Stopping and removing old container..."
             docker stop myapp || true
             docker rm myapp || true
-
-            echo "Starting new container with a specific name (myapp) and port (8080)..."
+            
+            echo "Starting new container..."
             docker run -d --name myapp -p 8080:8000 \
-              --env-file ~/.env \
+              --env-file /path/to/.env \
+              -v /path/to/static:/app/static \
               ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
-
+            
+            echo "Applying migrations..."
+            docker exec myapp python manage.py migrate --noinput
+            
+            echo "Collecting static files..."
+            docker exec myapp python manage.py collectstatic --noinput
+            
             echo "Cleaning up old images..."
             docker image prune -f
