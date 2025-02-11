@@ -20,7 +20,7 @@ jobs:
           pip install --no-cache-dir -r requirements.txt flake8
 
       - name: Run flake8
-        run: flake8 .
+        run: flake8 --exclude=migrations,__pycache__
 
   tests:
     needs: lint
