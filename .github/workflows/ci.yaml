@@ -84,15 +84,23 @@ jobs:
             
             echo "Starting new container..."
             docker run -d --name myapp -p 8080:8000 \
-              --env-file /path/to/.env \
-              -v /path/to/static:/app/static \
+              --restart=always \
+              --env-file /home/admin/.env \
+              -v /home/admin/static:/app/static \
               ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
-            
+
             echo "Applying migrations..."
             docker exec myapp python manage.py migrate --noinput
             
             echo "Collecting static files..."
             docker exec myapp python manage.py collectstatic --noinput
+            
+    
+            echo "Checking running containers..."
+            docker ps -a
+            
+            echo "Checking logs..."
+            docker logs myapp
             
             echo "Cleaning up old images..."
             docker image prune -f
