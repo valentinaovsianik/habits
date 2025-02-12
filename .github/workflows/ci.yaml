@@ -75,9 +75,11 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            set -e  # Остановить выполнение при ошибке
+            
             echo "Creating .env file..."
-            echo "${{ secrets.ENV_FILE }}" > /path/to/.env
-            chmod 600 /path/to/.env
+            echo "${{ secrets.ENV_FILE }}" > > /home/${{ secrets.SSH_USER }}/myapp/.env
+            chmod 600 /home/${{ secrets.SSH_USER }}/myapp/.env
             
             echo "Granting Docker permissions..."
             sudo chmod 666 /var/run/docker.sock
@@ -85,21 +87,27 @@ jobs:
             echo "Pulling latest Docker image..."
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
             
-            echo "Stopping and removing old container..."
-            docker stop myapp || true
-            docker rm myapp || true
+            echo "Stopping old container if running..."
+            if docker ps -q --filter "name=myapp"; then
+              docker stop myapp && docker rm myapp
+            fi
+
+           echo "Starting new container..."
+           docker run -d --name myapp -p 8080:8000 \
+             --env-file /home/${{ secrets.SSH_USER }}/myapp/.env \
+             -v /home/${{ secrets.SSH_USER }}/static:/app/static \
+             ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
+
+           echo "Waiting for the container to be ready..."
+           sleep 5
+          
+           echo "Applying migrations..."
+           docker exec myapp python manage.py migrate --noinput
             
-            echo "Starting new container..."
-            docker run -d --name myapp -p 8080:8000 \
-              --env-file /path/to/.env \
-              -v /path/to/static:/app/static \
-              ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }} || { echo "Failed to start container"; exit 1; }
+           echo "Collecting static files..."
+           docker exec myapp python manage.py collectstatic --noinput
             
-            echo "Applying migrations..."
-            docker exec myapp python manage.py migrate --noinput
+           echo "Cleaning up old images..."
+           docker image prune -f
             
-            echo "Collecting static files..."
-            docker exec myapp python manage.py collectstatic --noinput
-            
-            echo "Cleaning up old images..."
-            docker image prune -f
+           echo "Deployment completed successfully!"
