@@ -68,15 +68,6 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Set up SSH key
-        run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          eval "$(ssh-agent -s)"
-          ssh-add ~/.ssh/id_rsa
-
       - name: Deploy to Server
         uses: appleboy/ssh-action@v0.1.10
         with:
@@ -88,21 +79,20 @@ jobs:
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
             
             echo "Stopping and removing old container..."
-            if [ $(docker ps -q --filter "name=myapp") ]; then
-              docker stop myapp
-              docker rm myapp
-            fi
-            
-            echo "Checking if .env file exists..."
-            if [ ! -f ~/.env ]; then
-              echo "Error: .env file not found!"
-              exit 1
-            fi
+            docker stop myapp || true
+            docker rm myapp || true
             
             echo "Starting new container..."
             docker run -d --name myapp -p 8080:8000 \
-              --env-file ~/.env \
+              --env-file /path/to/.env \
+              -v /path/to/static:/app/static \
               ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
+            
+            echo "Applying migrations..."
+            docker exec myapp python manage.py migrate --noinput
+            
+            echo "Collecting static files..."
+            docker exec myapp python manage.py collectstatic --noinput
             
             echo "Cleaning up old images..."
             docker image prune -f
