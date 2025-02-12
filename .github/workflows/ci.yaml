@@ -36,7 +36,7 @@ jobs:
 
       - name: Create .env file for tests
         run: |
-          echo "${{ secrets.DOTENV }}" | sed '/^#/d' > .env
+          echo "${{ secrets.DOTENV }}" | sed '/^#/d;/^$/d' > .env
           echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
 
       - name: Install dependencies
@@ -60,9 +60,11 @@ jobs:
 
       - name: Build Docker image
         run: docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }} .
+             docker tag ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }} ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:latest
 
       - name: Push Docker image to Docker Hub
         run: docker push ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
+             docker push ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:latest
 
   deploy:
     needs: build
@@ -93,7 +95,7 @@ jobs:
             docker run -d --name myapp -p 8080:8000 \
               --env-file /path/to/.env \
               -v /path/to/static:/app/static \
-              ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
+              ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }} || { echo "Failed to start container"; exit 1; }
             
             echo "Applying migrations..."
             docker exec myapp python manage.py migrate --noinput
