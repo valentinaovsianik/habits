@@ -71,15 +71,21 @@ jobs:
       - name: Deploy to Server
         uses: appleboy/ssh-action@v0.1.10
         with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            echo "Deploying..."
-            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
-            docker stop myapp || true
-            docker rm myapp || true
-            docker run -d --name myapp -p 8080:8000 \
-              --env-file ~/.env \
-              ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
-            docker image prune -f
+            host: ${{ secrets.SERVER_IP }}
+            username: ${{ secrets.SSH_USER }}
+            key: ${{ secrets.SSH_KEY }}
+            script: |
+              echo "Pulling latest Docker image..."
+              docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
+              
+              echo "Stopping and removing old container..."
+              docker stop myapp || true
+              docker rm myapp || true
+              
+              echo "Starting new container..."
+              docker run -d --name myapp -p 8080:8000 \
+                --env-file ~/.env \
+                ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
+              
+              echo "Cleaning up old images..."
+              docker image prune -f
