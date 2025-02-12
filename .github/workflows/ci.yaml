@@ -68,24 +68,41 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_rsa
+
       - name: Deploy to Server
         uses: appleboy/ssh-action@v0.1.10
         with:
-            host: ${{ secrets.SERVER_IP }}
-            username: ${{ secrets.SSH_USER }}
-            key: ${{ secrets.SSH_KEY }}
-            script: |
-              echo "Pulling latest Docker image..."
-              docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
-              
-              echo "Stopping and removing old container..."
-              docker stop myapp || true
-              docker rm myapp || true
-              
-              echo "Starting new container..."
-              docker run -d --name myapp -p 8080:8000 \
-                --env-file ~/.env \
-                ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
-              
-              echo "Cleaning up old images..."
-              docker image prune -f
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            echo "Pulling latest Docker image..."
+            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
+            
+            echo "Stopping and removing old container..."
+            if [ $(docker ps -q --filter "name=myapp") ]; then
+              docker stop myapp
+              docker rm myapp
+            fi
+            
+            echo "Checking if .env file exists..."
+            if [ ! -f ~/.env ]; then
+              echo "Error: .env file not found!"
+              exit 1
+            fi
+            
+            echo "Starting new container..."
+            docker run -d --name myapp -p 8080:8000 \
+              --env-file ~/.env \
+              ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
+            
+            echo "Cleaning up old images..."
+            docker image prune -f
