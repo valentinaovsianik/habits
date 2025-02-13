@@ -79,25 +79,34 @@ jobs:
             echo "${{ secrets.ENV_FILE }}" | base64 --decode > /home/admin/.env
             
             echo "Pulling latest Docker image..."
-            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
-            
-            echo "Stopping old containers..."
-            docker-compose -f /home/admin/docker-compose.yml down
-            
-            echo "Starting new containers..."
-            docker-compose -f /home/admin/docker-compose.yml up -d
-            
-            echo "Applying migrations..."
-            docker exec myapp python manage.py migrate --noinput
-            
-            echo "Collecting static files..."
-            docker exec myapp python manage.py collectstatic --noinput
-            
-            echo "Checking running containers..."
-            docker ps -a
-            
-            echo "Checking logs..."
-            docker logs myapp
-            
-            echo "Cleaning up old images..."
-            docker image prune -f
+          docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
+
+          echo "Stopping old containers..."
+          docker-compose -f /home/admin/docker-compose.yml down
+
+          echo "Starting new containers..."
+          docker-compose -f /home/admin/docker-compose.yml up -d
+
+          echo "Waiting for container to be ready..."
+          sleep 7 
+
+          echo "Checking running containers..."
+          docker ps -a
+
+          echo "Ensuring 'myapp' container is running..."
+          until docker ps | grep -q "myapp"; do
+            echo "Waiting for 'myapp' container to start..."
+            sleep 5
+          done
+
+          echo "Applying migrations..."
+          docker exec myapp python manage.py migrate --noinput
+
+          echo "Collecting static files..."
+          docker exec myapp python manage.py collectstatic --noinput
+
+          echo "Checking logs..."
+          docker logs myapp
+
+          echo "Cleaning up old images..."
+          docker image prune -f
