@@ -85,7 +85,7 @@ jobs:
             docker-compose -f /home/admin/docker-compose.yml down
             
             echo "Starting new containers..."
-            docker-compose -f /home/admin/docker-compose.yml up -d --build
+            docker-compose -f /home/admin/docker-compose.yml up -d
             
             echo "Applying migrations..."
             docker exec myapp python manage.py migrate --noinput

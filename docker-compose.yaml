@@ -39,8 +39,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD", "pg_isready", "-U", "${USER}" ]
-      interval: 15s
-      timeout: 10s
+      interval: 20s
+      timeout: 15s
       retries: 5
 
   redis:
@@ -49,10 +49,9 @@ services:
       - "6379"
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
-      interval: 10s
-      timeout: 5s
+      interval: 20s
+      timeout: 15s
       retries: 5
-    restart: always
 
   celery:
     build: .
