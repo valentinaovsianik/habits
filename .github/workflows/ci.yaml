@@ -81,23 +81,18 @@ jobs:
             echo "Pulling latest Docker image..."
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
             
-            echo "Stopping and removing old container..."
-            docker stop myapp || true
-            docker rm myapp || true
+            echo "Stopping old containers..."
+            docker-compose -f /home/admin/docker-compose.yml down
             
-            echo "Starting new container..."
-            docker run -d --name myapp -p 8080:8000 \
-              --restart=always \
-              --env-file /home/admin/.env \
-              -v /home/admin/static:/app/static \
-              ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
-
+            echo "Starting new containers..."
+            docker-compose -f /home/admin/docker-compose.yml up -d --build
+            
             echo "Applying migrations..."
             docker exec myapp python manage.py migrate --noinput
             
             echo "Collecting static files..."
-            docker exec myapp python manage.py collectstatic --noinput      
-    
+            docker exec myapp python manage.py collectstatic --noinput
+            
             echo "Checking running containers..."
             docker ps -a
             

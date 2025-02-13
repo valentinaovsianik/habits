@@ -9,8 +9,9 @@ services:
     env_file:
       - .env
     environment:
-      - DEBUG=True
       - DATABASE_HOST=db
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     volumes:
       - .:/code
       - static_volume:/code/static
@@ -21,6 +22,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    restart: always
 
   db:
     image: postgres:16
@@ -50,6 +52,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: always
 
   celery:
     build: .
