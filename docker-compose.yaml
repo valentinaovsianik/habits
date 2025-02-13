@@ -1,17 +1,15 @@
+version: '3.8'
+
 services:
   web:
     build: .
     command: >
-      bash -c "python manage.py makemigrations && 
-               python manage.py migrate && 
+      bash -c "python manage.py makemigrations &&
+               python manage.py migrate &&
                python manage.py collectstatic --noinput &&
                python manage.py runserver 0.0.0.0:8000"
     env_file:
       - .env
-    environment:
-      - DATABASE_HOST=db
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     volumes:
       - .:/code
       - static_volume:/code/static
@@ -28,9 +26,9 @@ services:
     image: postgres:16
     env_file: .env
     environment:
-      - POSTGRES_DB=${NAME}
-      - POSTGRES_USER=${USER}
-      - POSTGRES_PASSWORD=${PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     expose:
@@ -38,7 +36,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "${USER}" ]
+      test: [ "CMD", "pg_isready", "-U", "${POSTGRES_USER}" ]
       interval: 20s
       timeout: 15s
       retries: 5
@@ -63,6 +61,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    restart: always
 
   celery-beat:
     build: .
@@ -75,6 +74,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    restart: always
 
 volumes:
   postgres_data:
