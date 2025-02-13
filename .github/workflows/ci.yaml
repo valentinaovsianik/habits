@@ -75,6 +75,9 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           script: |
+            echo "Creating .env file on the server..."
+            echo "${{ secrets.ENV_FILE }}" | base64 --decode > /home/admin/.env
+            
             echo "Pulling latest Docker image..."
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/myapp:${{ github.sha }}
             
@@ -93,8 +96,7 @@ jobs:
             docker exec myapp python manage.py migrate --noinput
             
             echo "Collecting static files..."
-            docker exec myapp python manage.py collectstatic --noinput
-            
+            docker exec myapp python manage.py collectstatic --noinput      
     
             echo "Checking running containers..."
             docker ps -a
