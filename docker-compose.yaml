@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    entrypoint: >
+      bash -c "python manage.py migrate &&
+               python manage.py collectstatic --noinput &&
+               python manage.py runserver 0.0.0.0:8000"
+    env_file:
+      - .env
+    volumes:
+      - .:/code
+      - static_volume:/code/static
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
+
+  db:
+    image: postgres:16
+    env_file: .env
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    expose:
+      - "5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "${POSTGRES_USER}" ]
+      interval: 20s
+      timeout: 15s
+      retries: 5
+
+  redis:
+    image: redis:latest
+    expose:
+      - "6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 20s
+      timeout: 15s
+      retries: 5
+
+  celery:
+    build: .
+    command: >
+      bash -c "celery -A config worker --loglevel=info --pool=eventlet"
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
+
+  celery-beat:
+    build: .
+    command: >
+      bash -c "python manage.py migrate django_celery_beat &&
+               celery -A config beat --loglevel=info"
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
+
+volumes:
+  postgres_data:
+  static_volume:

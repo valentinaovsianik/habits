@@ -1,4 +1,5 @@
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 
@@ -12,9 +13,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 
-DEBUG = True if os.getenv("DEBUG") == "True" else False
+DEBUG = os.getenv("DEBUG") == "True"
 
-ALLOWED_HOSTS = []
+
+ALLOWED_HOSTS = ["*"]
 
 
 INSTALLED_APPS = [
@@ -66,17 +68,24 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": os.getenv("NAME"),
-        "USER": os.getenv("USER"),
-        "PASSWORD": os.getenv("PASSWORD"),
-        "HOST": os.getenv("HOST"),
-        "PORT": os.getenv("PORT"),
+if 'test' in sys.argv:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'test_db.sqlite3',
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql_psycopg2",
+            "NAME": os.getenv("NAME"),
+            "USER": os.getenv("USER"),
+            "PASSWORD": os.getenv("PASSWORD"),
+            "HOST": os.getenv("HOST"),
+            "PORT": os.getenv("PORT"),
+        }
+    }
 
 
 AUTH_PASSWORD_VALIDATORS = [
